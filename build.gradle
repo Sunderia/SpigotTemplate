@@ -6,22 +6,31 @@ plugins {
     id "com.github.johnrengelman.shadow" version "7.1.2"
 }
 
+apply from: rootProject.file('specialSource.gradle')
 apply from: rootProject.file('buildtools.gradle')
 
 group 'fr.minemobs'
 version '1.0-SNAPSHOT'
-String mcVersion = '1.18.2'
+String mcVersion = '1.19.2'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 repositories {
     mavenCentral()
     mavenLocal()
+    maven {
+        url 'https://maven.galaxyfight.fr/snapshots'
+    }
+    maven {
+        name = "Jeff"
+        url = 'https://hub.jeff-media.com/nexus/repository/jeff-media-public/'
+    }
 }
 
 dependencies {
     compileOnly "org.spigotmc:spigot:$mcVersion-R0.1-SNAPSHOT:remapped-mojang"
     compileOnly(spigot(mcVersion))
+    implementation 'fr.sunderia:SunderiaUtils:1.5.5-SNAPSHOT'
 }
 
 setMCVersion {
@@ -49,6 +58,19 @@ spigot {
     }
     authors group.toString().split('\\.')[1]
     apiVersion mcVersion.split("\\.")[0..1].join('.')
+}
+
+afterEvaluate {
+    shadowJar {
+        doLast {
+            def outputFiles = outputs.files.files
+            for (inputFile in outputFiles) {
+                File intermediateFile = new File(temporaryDir, inputFile.name.replace('.jar', '-obf.jar'))
+                File outputFile = inputFile
+                remapMojangToSpigot(inputFile, intermediateFile, outputFile, "1.18.1-R0.1-SNAPSHOT")
+            }
+        }
+    }
 }
 
 
